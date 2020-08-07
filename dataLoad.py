@@ -10,6 +10,7 @@ import numpy as np
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
+ap.add_argument("--batch", type=int,required=False, default=10,help="batch size")
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
@@ -19,7 +20,7 @@ print(device)
 TRANSLATE=int(args['translate'])
 MAX_LEN=50      #限定最长句子
 SOS_ID=1        #<sos>的ID
-BATCH_SIZE=3    #batch大小
+BATCH_SIZE=int(args['batch'])    #batch大小
 SEED=1234       #随机seed
 EMB_DIM=1024      #嵌入维度
 HID_DIM=1024
@@ -81,7 +82,7 @@ def collate_fn(batch_data,pad=0):
     len_a=torch.IntTensor(len_a).to(device)
     textb=torch.LongTensor(textb).to(device)
     textb_input=torch.LongTensor(textb_input).to(device)
-    len_b=torch.IntTensor(len_b)
+    len_b=torch.IntTensor(len_b).to(device)
 
     # 返回padding后的输入源句、对应长度、目标输出、解码器输入、对应长度
     return (texta,len_a,textb,textb_input,len_b)
