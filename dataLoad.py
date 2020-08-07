@@ -8,14 +8,13 @@ import time
 import pandas as pd
 import numpy as np
 
-
 ap = argparse.ArgumentParser()
 ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
 ap.add_argument("--batch", type=int,required=False, default=100,help="batch size")
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 print(device)
 
 TRANSLATE=int(args['translate'])
