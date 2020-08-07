@@ -327,6 +327,7 @@ def main():
             #print(f'\t Val. Loss: {valid_loss:.3f}')
     else:
         print('translate:')
+        seq2seq.load_state_dict(torch.load('tut1-model.pt'))
 
 
 if __name__=='__main__':
