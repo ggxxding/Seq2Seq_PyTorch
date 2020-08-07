@@ -81,7 +81,7 @@ def collate_fn(batch_data,pad=0):
     len_a=torch.IntTensor(len_a).to(device)
     textb=torch.LongTensor(textb).to(device)
     textb_input=torch.LongTensor(textb_input).to(device)
-    len_b=torch.IntTensor(len_b).to(device)
+    len_b=torch.IntTensor(len_b)
 
     # 返回padding后的输入源句、对应长度、目标输出、解码器输入、对应长度
     return (texta,len_a,textb,textb_input,len_b)
