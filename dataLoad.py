@@ -13,7 +13,7 @@ ap.add_argument("--translate", type=int,required=False, default=0,help="num of e
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
 print(device)
 
 TRANSLATE=int(args['translate'])
@@ -253,6 +253,7 @@ def train(model, iterator, optimizer, criterion, clip, step):
 
         epoch_loss += cost.item()
         step+=1
+
         if step%10==0:
             print("After %d steps, cost if %.3f"%(step,cost))
 
