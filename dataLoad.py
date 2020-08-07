@@ -13,13 +13,13 @@ ap.add_argument("--translate", type=int,required=False, default=0,help="num of e
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
-device = torch.device("cpu" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 TRANSLATE=int(args['translate'])
 MAX_LEN=50      #限定最长句子
 SOS_ID=1        #<sos>的ID
-BATCH_SIZE=100    #batch大小
+BATCH_SIZE=3    #batch大小
 SEED=1234       #随机seed
 EMB_DIM=1024      #嵌入维度
 HID_DIM=1024
@@ -214,6 +214,7 @@ def sequence_mask(lengths, max_len=None):
     #create a boolean mask from sequence lengths
     batch_size = lengths.numel()
     max_len = max_len or lengths.max()
+    print(lengths.device)
     return (torch.arange(0, max_len, device = lengths.device).type_as(lengths)
             .unsqueeze(0).expand(batch_size,max_len)
             .lt(lengths.unsqueeze(1)))
