@@ -9,12 +9,14 @@ import pandas as pd
 import numpy as np
 
 ap = argparse.ArgumentParser()
+ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
+TRANSLATE=int(args['translate'])
 MAX_LEN=50      #限定最长句子
 SOS_ID=1        #<sos>的ID
 BATCH_SIZE=100    #batch大小
@@ -173,7 +175,7 @@ class Seq2Seq(nn.Module):
         trg_vocab_size = self.decoder.output_dim
         # tensor to store decoder outputs
         outputs = torch.zeros(batch_size,max_len,
-                              trg_vocab_size).to(self.device)#*[batch,len,vocab_size]
+                              trg_vocab_size)#*[batch,len,vocab_size]
 
         # last hidden state of the encoder is used as the initial hidden state of the decoder
         hidden, cell = self.encoder.forward(src)# shape:*[n layer,batch, hiddim]
@@ -301,25 +303,28 @@ def main():
     # we ignore the loss whenever the target token is a padding token
     criterion = nn.CrossEntropyLoss(reduce=False)
 
-    best_valid_loss = float('inf')
-    step=0
-    for epoch in range(NUM_EPOCH):
-        start_time = time.time()
+    if TRANSLATE==0:
+        best_valid_loss = float('inf')
+        step=0
+        for epoch in range(NUM_EPOCH):
+            start_time = time.time()
 
-        train_loss, step = train(seq2seq, dataLoader, optimizer, criterion, CLIP, step)
-        #valid_loss = evaluate(model, valid_iterator, criterion)
+            train_loss, step = train(seq2seq, dataLoader, optimizer, criterion, CLIP, step)
+            #valid_loss = evaluate(model, valid_iterator, criterion)
 
-        end_time = time.time()
+            end_time = time.time()
 
-        epoch_mins, epoch_secs = epoch_time(start_time, end_time)
+            epoch_mins, epoch_secs = epoch_time(start_time, end_time)
 
-        '''if valid_loss < best_valid_loss:
-            best_valid_loss = valid_loss'''
-        torch.save(model.state_dict(), 'tut1-model.pt')
+            '''if valid_loss < best_valid_loss:
+                best_valid_loss = valid_loss'''
+            torch.save(model.state_dict(), 'tut1-model.pt')
 
-        print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
-        print(f'\tTrain Loss: {train_loss:.3f}')
-        #print(f'\t Val. Loss: {valid_loss:.3f}')
+            print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
+            print(f'\tTrain Loss: {train_loss:.3f}')
+            #print(f'\t Val. Loss: {valid_loss:.3f}')
+    else:
+        print('translta')
 
 
 if __name__=='__main__':
