@@ -175,7 +175,7 @@ class Seq2Seq(nn.Module):
         trg_vocab_size = self.decoder.output_dim
         # tensor to store decoder outputs
         outputs = torch.zeros(batch_size,max_len,
-                              trg_vocab_size)#*[batch,len,vocab_size]
+                              trg_vocab_size).to(self.device)#*[batch,len,vocab_size]
 
         # last hidden state of the encoder is used as the initial hidden state of the decoder
         hidden, cell = self.encoder.forward(src)# shape:*[n layer,batch, hiddim]
@@ -235,7 +235,7 @@ def train(model, iterator, optimizer, criterion, clip, step):
         # output = [batch, trglen, output dim]
 
         #mask matrix
-        mask_matrix=sequence_mask(trg_size,trg.shape[1]).view(-1)
+        mask_matrix=sequence_mask(trg_size,trg.shape[1]).view(-1).to(device)
         #output = output[1:].view(-1, output.shape[-1])
         output = output.view(-1, output.shape[-1])  #[batch*trglen ,outdim]
         trg = trg.view(-1)                          #*[batch*trglen]
@@ -324,7 +324,7 @@ def main():
             print(f'\tTrain Loss: {train_loss:.3f}')
             #print(f'\t Val. Loss: {valid_loss:.3f}')
     else:
-        print('translta')
+        print('translate')
 
 
 if __name__=='__main__':
