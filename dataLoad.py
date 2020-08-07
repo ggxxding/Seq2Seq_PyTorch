@@ -77,11 +77,11 @@ def collate_fn(batch_data,pad=0):
     textb = [x + [pad] * (maxlen_b - len(x)) for x in textb]
     textb_input = [x + [pad] * (maxlen_b - len(x)) for x in textb_input]
 
-    texta=torch.LongTensor(texta)
-    len_a=torch.IntTensor(len_a)
-    textb=torch.LongTensor(textb)
-    textb_input=torch.LongTensor(textb_input)
-    len_b=torch.IntTensor(len_b)
+    texta=torch.LongTensor(texta).to(device)
+    len_a=torch.IntTensor(len_a).to(device)
+    textb=torch.LongTensor(textb).to(device)
+    textb_input=torch.LongTensor(textb_input).to(device)
+    len_b=torch.IntTensor(len_b).to(device)
 
     # 返回padding后的输入源句、对应长度、目标输出、解码器输入、对应长度
     return (texta,len_a,textb,textb_input,len_b)
