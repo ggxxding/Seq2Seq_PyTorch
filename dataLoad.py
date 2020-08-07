@@ -214,7 +214,6 @@ def sequence_mask(lengths, max_len=None):
     #create a boolean mask from sequence lengths
     batch_size = lengths.numel()
     max_len = max_len or lengths.max()
-    print(lengths.device)
     return (torch.arange(0, max_len, device = lengths.device).type_as(lengths)
             .unsqueeze(0).expand(batch_size,max_len)
             .lt(lengths.unsqueeze(1)))
@@ -236,7 +235,7 @@ def train(model, iterator, optimizer, criterion, clip, step):
         # output = [batch, trglen, output dim]
 
         #mask matrix
-        mask_matrix=sequence_mask(trg_size,trg.shape[1]).view(-1).to(device)
+        mask_matrix=sequence_mask(trg_size,trg.shape[1]).view(-1)
         #output = output[1:].view(-1, output.shape[-1])
         output = output.view(-1, output.shape[-1])  #[batch*trglen ,outdim]
         trg = trg.view(-1)                          #*[batch*trglen]
