@@ -8,6 +8,7 @@ import time
 import pandas as pd
 import numpy as np
 
+
 ap = argparse.ArgumentParser()
 ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
 ap.add_argument("--batch", type=int,required=False, default=100,help="batch size")
