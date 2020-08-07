@@ -297,6 +297,7 @@ def main():
     seq2seq.apply(init_weights)
     # optimizer
     optimizer = optim.Adam(seq2seq.parameters())
+    #344 657 483 381
 
     # index of <pad>
     #PAD_IDX = TRG.vocab.stoi['<pad>']
@@ -319,13 +320,18 @@ def main():
 
             '''if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss'''
-            torch.save(model.state_dict(), 'tut1-model.pt')
+            torch.save(seq2seq.state_dict(), 'tut1-model.pt')
 
             print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
             print(f'\tTrain Loss: {train_loss:.3f}')
             #print(f'\t Val. Loss: {valid_loss:.3f}')
     else:
         print('translate:')
+        seq2seq.load_state_dict(torch.load('tut1-model.pt'))
+        seq2seq.eval()
+        print('parameter loaded')
+
+        
 
 
 if __name__=='__main__':
