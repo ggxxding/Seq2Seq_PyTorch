@@ -10,7 +10,7 @@ import numpy as np
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
-ap.add_argument("--batch", type=int,required=False, default=10,help="batch size")
+ap.add_argument("--batch", type=int,required=False, default=100,help="batch size")
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
