@@ -14,7 +14,7 @@ ap.add_argument("--batch", type=int,required=False, default=100,help="batch size
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
 args = vars(ap.parse_args())
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 TRANSLATE=int(args['translate'])
@@ -326,7 +326,7 @@ def main():
             print(f'\tTrain Loss: {train_loss:.3f}')
             #print(f'\t Val. Loss: {valid_loss:.3f}')
     else:
-        print('translate')
+        print('translate:')
 
 
 if __name__=='__main__':
