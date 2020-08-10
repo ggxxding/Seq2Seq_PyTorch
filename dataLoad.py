@@ -65,9 +65,8 @@ def collate_fn(batch_data,pad=0):
     texta=[x[0] for x in texta]                         #[]
     textb=[x[0] for x in textb]
 
-    print(len(len_a))
     # 删除过长句子和空句子 len==1 or len>MAX_LEN
-    for i in range(BATCH_SIZE-1,-1,-1):
+    for i in range(len(len_a)-1,-1,-1):
         if (len_a[i]==1)|(len_a[i]>MAX_LEN)|(len_b[i]==1)|(len_b[i]>MAX_LEN):
             texta.pop(i)
             textb.pop(i)
