@@ -291,7 +291,7 @@ def epoch_time(start_time, end_time):
 
 def main():
     trainset = trainSet(train_file_en='./data/en.number', train_file_zh='./data/zh.number')
-    dataLoader = DataLoader(dataset=trainset, batch_size=BATCH_SIZE, shuffle=False, collate_fn=collate_fn)
+    dataLoader = DataLoader(dataset=trainset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
 
     encoder = Encoder(INPUT_DIM, EMB_DIM, HID_DIM, NUM_LAYERS, DROPOUT)
     decoder = Decoder(OUTPUT_DIM, EMB_DIM, HID_DIM, NUM_LAYERS, DROPOUT)
