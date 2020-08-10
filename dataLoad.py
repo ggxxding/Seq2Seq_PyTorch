@@ -299,7 +299,7 @@ def main():
     seq2seq = Seq2Seq(encoder, decoder, device).to(device)
     seq2seq.apply(init_weights)
     # optimizer
-    optimizer = optim.Adam(seq2seq.parameters(),lr=LEARNING_RATE)
+    optimizer = optim.Adam(seq2seq.parameters())
     #344 657 483 381
 
     # index of <pad>
