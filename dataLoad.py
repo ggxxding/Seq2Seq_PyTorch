@@ -7,11 +7,11 @@ import random
 import time
 import pandas as pd
 import numpy as np
-
 ap = argparse.ArgumentParser()
-ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch")
-ap.add_argument("--batch", type=int,required=False, default=100,help="batch size")
-ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch")
+ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch default=0")
+ap.add_argument("--batch", type=int,required=False, default=100,help="batch size default=100")
+ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch default=5")
+ap.add_argument("--lr", type=float,required=False, default=0.001,help="learning rate default=0.001")
 args = vars(ap.parse_args())
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -25,6 +25,7 @@ SEED=1234       #随机seed
 EMB_DIM=1024      #嵌入维度
 HID_DIM=1024
 NUM_EPOCH=int(args['epoch'])
+LEARNING_RATE=int(args['lr'])
 NUM_LAYERS=3    #隐层数量
 INPUT_DIM=10000
 OUTPUT_DIM=4000
@@ -58,11 +59,13 @@ def collate_fn(batch_data,pad=0):
     # texta,textb,label = list(zip(*batch_data)) 输入多个序列时用该函数“解压”
     #texta[x][0]为数字序列  [x][1]为长度
     texta,textb=list(zip(*batch_data))
-    textb_input=[[SOS_ID]+x[0][:-1] for x in textb]
+    textb_input=[[SOS_ID]+x[0][:-1] for x in textb]     #[<sos>,y1,y2...,yn]
     len_a=[x[1] for x in texta]
     len_b=[x[1] for x in textb]
-    texta=[x[0] for x in texta]
+    texta=[x[0] for x in texta]                         #[]
     textb=[x[0] for x in textb]
+
+    print(len(len_a))
     # 删除过长句子和空句子 len==1 or len>MAX_LEN
     for i in range(BATCH_SIZE-1,-1,-1):
         if (len_a[i]==1)|(len_a[i]>MAX_LEN)|(len_b[i]==1)|(len_b[i]>MAX_LEN):
@@ -255,7 +258,7 @@ def train(model, iterator, optimizer, criterion, clip, step):
         step+=1
 
         if step%10==0:
-            print("After %d steps, cost if %.3f"%(step,cost))
+            print("After %d steps, cost is %.3f"%(step,cost))
 
     return epoch_loss / len(iterator), step
 
@@ -296,7 +299,7 @@ def main():
     seq2seq = Seq2Seq(encoder, decoder, device).to(device)
     seq2seq.apply(init_weights)
     # optimizer
-    optimizer = optim.Adam(seq2seq.parameters())
+    optimizer = optim.Adam(seq2seq.parameters(),lr=LEARNING_RATE)
     #344 657 483 381
 
     # index of <pad>
@@ -321,6 +324,7 @@ def main():
             '''if valid_loss < best_valid_loss:
                 best_valid_loss = valid_loss'''
             torch.save(seq2seq.state_dict(), 'tut1-model.pt')
+            print('saved')
 
             print(f'Epoch: {epoch + 1:02} | Time: {epoch_mins}m {epoch_secs}s')
             print(f'\tTrain Loss: {train_loss:.3f}')
@@ -331,7 +335,7 @@ def main():
         seq2seq.eval()
         print('parameter loaded')
 
-        
+
 
 
 if __name__=='__main__':
