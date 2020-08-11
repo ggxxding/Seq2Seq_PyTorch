@@ -5,13 +5,12 @@ import torch.optim as optim
 import argparse
 import random
 import time
-import pandas as pd
-import numpy as np
 ap = argparse.ArgumentParser()
-ap.add_argument("--translate", type=int,required=False, default=0,help="num of epoch default=0")
+ap.add_argument("--translate", type=int,required=False, default=0,help="0:train, 1:translate, default=0")
 ap.add_argument("--batch", type=int,required=False, default=100,help="batch size default=100")
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch default=5")
 ap.add_argument("--lr", type=float,required=False, default=0.001,help="learning rate default=0.001")
+ap.add_argument("--input", type=str,required=False, default='please input the sentence',help="input to translate default=test")
 args = vars(ap.parse_args())
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -20,18 +19,24 @@ print(device)
 TRANSLATE=int(args['translate'])
 MAX_LEN=50      #限定最长句子
 SOS_ID=1        #<sos>的ID
+EOS_ID=2
 BATCH_SIZE=int(args['batch'])    #batch大小
 SEED=1234       #随机seed
 EMB_DIM=1024      #嵌入维度
 HID_DIM=1024
 NUM_EPOCH=int(args['epoch'])
 LEARNING_RATE=int(args['lr'])
+INPUT=str(args['input'])
 NUM_LAYERS=3    #隐层数量
 INPUT_DIM=10000
 OUTPUT_DIM=4000
 DROPOUT=0.5
 TEACHER_FORCING_RATIO=0.5
 CLIP=1
+SRC_VOCAB='./data/en.vocab'
+TRG_VOCAB='./data/zh.vocab'
+SRC_TRAIN_DATA='./data/en.number'
+TRG_TRAIN_DATA='./data/zh.number'
 
 class trainSet(Dataset):
     def __init__(self, train_file_en, train_file_zh):
@@ -47,13 +52,14 @@ class trainSet(Dataset):
         '''
         返回df的长度
         '''
-        return len(self.texts_zh)
+        return len(self.texts_en)
     def __getitem__(self, idx):
         '''
         根据 idx 返回一行数据
         '''
         #return self.df.iloc[idx].SalePrice
         return self.texts_en[idx],self.texts_zh[idx]
+
 def collate_fn(batch_data,pad=0):
     """传进一个batch_size大小的数据"""
     # texta,textb,label = list(zip(*batch_data)) 输入多个序列时用该函数“解压”
@@ -144,13 +150,13 @@ class Decoder(nn.Module):
         # hidden = [n layers, batch size, hid dim]
         # context = [n layers, batch size, hid dim]
 
-        input = input.unsqueeze(0)
-        input = input.permute(1,0)
-        # input = [1, batch size]               *[batch,1]
+        input = input.unsqueeze(1)#[batch] -> [batch,1]
+        #input = input.permute(1,0)#[1,batch]->[batch,1]
         embedded = self.dropout(self.embedding(input))
         # embedded = [1, batch size, emb dim]   *[batch,1,embdim]
 
         output, (hidden_, cell_) = self.rnn(embedded, (hidden, cell))
+
         # output = [sent len, batch size, hid dim * n directions]   *[batch,1(seqlen),hiddim]
         # hidden = [n layers * n directions, batch size, hid dim]   *[layer,batch,hiddim]
         # cell = [n layers * n directions, batch size, hid dim]     *[layer,batch,hiddim]
@@ -180,8 +186,7 @@ class Seq2Seq(nn.Module):
                               trg_vocab_size).to(self.device)#*[batch,len,vocab_size]
 
         # last hidden state of the encoder is used as the initial hidden state of the decoder
-        hidden, cell = self.encoder.forward(src)# shape:*[n layer,batch, hiddim]
-
+        hidden, cell = self.encoder.forward(src)# shape:*[n layer, batch, hiddim]
         # first input to the decoder is the <sos> tokens
         input = trg_input[:, 0]
         for t in range(0, max_len):
@@ -200,6 +205,21 @@ class Seq2Seq(nn.Module):
             # 在 模型训练速度 和 训练测试差别不要太大 作一个均衡
             input = trg[:,t] if teacher_force else top1
         return outputs  #trg
+    def forward_translate(self, src):
+        #src=[seqlen]
+        src=torch.LongTensor(src).unsqueeze(0)#[seqlen] -> [1(batch), seqlen]
+        hidden, cell = self.encoder.forward(src)# shape:*[n layer, batch, hiddim]
+        # first input to the decoder is the <sos> tokens
+        outputs = torch.LongTensor([SOS_ID])
+        input = outputs
+        for t in range(0, MAX_LEN):
+            output, hidden, cell = self.decoder.forward(input, hidden, cell)#input=[sos] output=[batch,outdim]
+            top1 = output.argmax(1)     #*[1(batch)]
+            input = top1
+            outputs = torch.cat((outputs, top1), 0)
+            if top1 == 2:
+                break
+        return outputs
 
 
 # init weights
@@ -229,7 +249,7 @@ def train(model, iterator, optimizer, criterion, clip, step):
         src, src_size, trg, trg_input, trg_size=batch
         #src = batch.src
         #trg = batch.trg
-        optimizer.zero_grad()
+        optimizer.zero_grad()#梯度清零
         #forward(self, src, trg, trg_input, trg_size, teacher_forcing_ratio=0.5):
         output = model.forward(src, trg, trg_input, trg_size, TEACHER_FORCING_RATIO)
 
@@ -247,11 +267,9 @@ def train(model, iterator, optimizer, criterion, clip, step):
         loss=loss*mask_matrix
         cost=loss.sum()/mask_matrix.sum()
 
-        cost.backward()
-
-        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-
-        optimizer.step()
+        cost.backward()   #反向传播
+        torch.nn.utils.clip_grad_norm_(model.parameters(), clip)#梯度裁剪
+        optimizer.step()#Adam优化
 
         epoch_loss += cost.item()
         step+=1
@@ -282,6 +300,24 @@ def evaluate(model, iterator, criterion):
 
     return epoch_loss / len(iterator)
 
+def translate(model, src_input):
+    print('input sentence: ',src_input)
+    src_input = src_input + ' <eos>'#加上结束标记
+    with open(SRC_VOCAB,'r',encoding='utf-8') as vocab:
+        src_vocab = [w.strip() for w in vocab.readlines()]
+        src_id_dict = dict((src_vocab[x],x) for x in range(INPUT_DIM))
+    test_en_ids = [(src_id_dict[en_text] if en_text in src_id_dict else src_id_dict['<unk>'])
+                   for en_text in src_input.split()]
+    print('input index :', test_en_ids)
+
+    output = model.forward_translate(test_en_ids)
+    print('output index: ', output)
+    with open(TRG_VOCAB,'r',encoding='utf-8') as vocab:
+        trg_vocab = [w.strip() for w in vocab.readlines()]
+    output_text = ''.join([trg_vocab[x] for x in output[1:-1]])
+    print('output text: ', output_text)
+
+
 # calculate time
 def epoch_time(start_time, end_time):
     elapsed_time = end_time - start_time
@@ -290,7 +326,7 @@ def epoch_time(start_time, end_time):
     return elapsed_mins, elapsed_secs
 
 def main():
-    trainset = trainSet(train_file_en='./data/en.number', train_file_zh='./data/zh.number')
+    trainset = trainSet(train_file_en=SRC_TRAIN_DATA, train_file_zh=TRG_TRAIN_DATA)
     dataLoader = DataLoader(dataset=trainset, batch_size=BATCH_SIZE, shuffle=True, collate_fn=collate_fn)
 
     encoder = Encoder(INPUT_DIM, EMB_DIM, HID_DIM, NUM_LAYERS, DROPOUT)
@@ -333,7 +369,7 @@ def main():
         seq2seq.load_state_dict(torch.load('tut1-model.pt'))
         seq2seq.eval()
         print('parameter loaded')
-
+        translate(seq2seq,INPUT)
 
 
 
