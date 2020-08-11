@@ -207,10 +207,10 @@ class Seq2Seq(nn.Module):
         return outputs  #trg
     def forward_translate(self, src):
         #src=[seqlen]
-        src=torch.LongTensor(src).unsqueeze(0)#[seqlen] -> [1(batch), seqlen]
+        src=torch.LongTensor(src).unsqueeze(0).to(device)#[seqlen] -> [1(batch), seqlen]
         hidden, cell = self.encoder.forward(src)# shape:*[n layer, batch, hiddim]
         # first input to the decoder is the <sos> tokens
-        outputs = torch.LongTensor([SOS_ID])
+        outputs = torch.LongTensor([SOS_ID]).to(device)
         input = outputs
         for t in range(0, MAX_LEN):
             output, hidden, cell = self.decoder.forward(input, hidden, cell)#input=[sos] output=[batch,outdim]
