@@ -11,10 +11,13 @@ ap.add_argument("--batch", type=int,required=False, default=100,help="batch size
 ap.add_argument("--epoch", type=int,required=False, default=5,help="num of epoch default=5")
 ap.add_argument("--lr", type=float,required=False, default=0.001,help="learning rate default=0.001")
 ap.add_argument("--input", type=str,required=False, default='please input the sentence',help="input to translate default=test")
+ap.add_argument("--gpu", type=int,required=False, default=1,help="1:gpu,other:cpu.")
 args = vars(ap.parse_args())
 
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+if args['gpu']==1:
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+else:
+    device=torch.device("cpu")
 print(device)
 
 TRANSLATE=int(args['translate'])
@@ -209,6 +212,7 @@ class Seq2Seq(nn.Module):
     def forward_translate(self, src):
         #src=[seqlen]
         src=torch.LongTensor(src).unsqueeze(0).to(device)#[seqlen] -> [1(batch), seqlen]
+
         hidden, cell = self.encoder.forward(src)# shape:*[n layer, batch, hiddim]
         # first input to the decoder is the <sos> tokens
         outputs = torch.LongTensor([SOS_ID]).to(device)
