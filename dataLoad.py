@@ -13,6 +13,7 @@ ap.add_argument("--lr", type=float,required=False, default=0.001,help="learning 
 ap.add_argument("--input", type=str,required=False, default='please input the sentence',help="input to translate default=test")
 args = vars(ap.parse_args())
 
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
@@ -367,6 +368,7 @@ def main():
     else:
         print('translate:')
         seq2seq.load_state_dict(torch.load('tut1-model.pt'))
+
         seq2seq.eval()
         print('parameter loaded')
         translate(seq2seq,INPUT)
